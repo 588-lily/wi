@@ -23,10 +23,10 @@ if page == "项目介绍":
         import streamlit as st
 
         images= [
-                 {'url':'111.png',
+                 {'url':'https://github.com/588-lily/wi/raw/main/111.png',
                   'parm':'学生数据分析示意图'
                 },
-                 {'url':'222.png',
+                 {'url':'https://github.com/588-lily/wi/raw/main/222.png',
                   'parm':'学生数据分析示意图'
                         }
 
@@ -271,6 +271,114 @@ elif page == "专业数据分析":
         st.plotly_chart(fig, use_container_width=True)
     with col2:
         st.plotly_chart(fig_box, use_container_width=True)
+
+else:
+    import streamlit as st
+    import pandas as pd
+    from sklearn.linear_model import LinearRegression
+    import numpy as np
+
+    st.set_page_config(page_title="🔮期末成绩预测", layout="wide", page_icon="📊")
+    st.title("🔮期末成绩预测")
+    st.markdown("---")
+    df = pd.read_csv("student_data_adjusted_rounded.csv")
+
+
+    c1, c2 = st.columns([1, 2])
+    with c1:
+        st.subheader('学号')
+        student_id = st.selectbox("学号", df["学号"].unique())
+        
+        st.subheader('性别')
+        gender = st.selectbox(
+            '选择性别',
+            ['男', '女'],
+            label_visibility='collapsed'
+        )
+        
+        st.subheader('专业')
+        gender = st.selectbox(
+            '请选择你的专业',
+            ['工商管理', '人工智能','财务管理','电子商务','大数据管理'],
+            label_visibility='collapsed'
+        )
+        
+    
+    with c2:
+        # 2. 读取数据（替换为你的文件路径）
+        df = pd.read_csv("student_data_adjusted_rounded.csv")
+
+        # 3. 训练成绩预测模型（以学习时长、出勤率等为特征，预测期末成绩）
+        def train_pred_model():
+           # 选择特征列与目标列
+            X = df[["每周学习时长（小时）", "上课出勤率", "期中考试分数", "作业完成率"]]
+            y = df["期末考试分数"]
+            # 训练线性回归模型
+            model = LinearRegression()
+            model.fit(X, y)
+            return model
+
+        model = train_pred_model()
+
+        # 4. 输入表单区域
+        st.subheader("✨输入学生学习信息")
+        with st.form("pred_form"):
+            # 输入特征（支持手动修改）
+            import streamlit as st
+            from datetime import datetime, time
+            hours = st.slider(
+                '每周学习时长（小时）',
+                10, 100,
+                key="hours"
+                )
+            attendance = st.slider(
+                '上课出勤率',
+                0.6, 1.0,
+                key="attendance"
+                )
+            mid_score = st.slider(
+                '期中考试分数',
+                40, 100,
+                key="mid_score"
+                )
+            homework_rate = st.slider(
+                '作业完成率',
+                0.5, 1.0,
+                key="homework_rate"
+                )
+            submit_btn=st.form_submit_button("提交预测")
+            if submit_btn:
+                input_data=[[hours,attendance,mid_score,homework_rate]]
+                pred_score=model.predict(input_data)
+                pred_score=max(0, min(100, pred_score))
+                st.write(f"预测期末成绩{pred_score}")  
+
+            
+    
+    st.markdown("---")
+    if submit_btn:
+        # 构造输入特征
+        input_features = np.array([[hours, attendance, mid_score, homework_rate]])
+        # 模型预测
+        try:
+            pred_score=model.predict(input_features)[0].round(2)
+        except Exception as e:
+            st.error(f"预测失败：{str(e)}")
+            score=0
+        
+        st.subheader("预测结果")
+        st.success(f"预测期末成绩：{pred_score}分")
+    
+        # 显示祝贺图（成绩达标时）
+        if pred_score >= 80:
+            st.image("https://github.com/588-lily/wi/raw/main/congratulations.jpg", use_container_width=True)  # 替换为你的烟花图路径
+            st.markdown("**学习建议：保持当前状态，继续巩固知识！**")
+        elif pred_score < 60:
+            st.image("https://github.com/588-lily/wi/raw/main/cheers.jpg", use_container_width=True)  
+            st.markdown("**学习建议：继续加油，不要气馁！**")
+        else:
+            st.warning("建议增加学习时长，提升课堂参与度~")
+    
 
 
 
